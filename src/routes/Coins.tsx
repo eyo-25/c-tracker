@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
+import { Helmet } from "react-helmet"
 import { Link } from "react-router-dom"
 import styled from "styled-components"
 import { GetCoins } from "../api"
@@ -35,9 +35,10 @@ export const Coin = styled.li`
         padding: 20px;
     }
     &:hover {
-        a{
-            color:${(props)=>props.theme.accentColor};
-        }
+        border-radius: 4px;
+        color: white;
+        background-color: ${(props)=>props.theme.accentColor};
+        transition: background-color .5s linear;
     }
 `
 
@@ -47,10 +48,20 @@ export const Img = styled.img`
     margin-right: 10px;
 `
 
+export const DogyImg = styled.img`
+    width: 35px;
+    height: 35px;
+    border-radius: 20px;
+    margin-right: 5px;
+`
+
+
 export const Title = styled.h1`
     font-size: 48px;
+    font-weight: 500;
     color:${(props)=>props.theme.accentColor};
     display: flex;
+    align-items: center;
 `
 
 interface ICoin {
@@ -67,8 +78,12 @@ function Coins() {
   const { isLoading,data } = useQuery<ICoin[]>(["allCoins"], GetCoins)
   return(
     <Container>
+      <Helmet>
+        <title>C-tracker</title>
+      </Helmet>
       <Header>
-        <Title>Coins</Title>
+        <DogyImg src={`https://yt3.ggpht.com/CF1dIIbgWiTgvKBvbfv7H_YThSFuna6JHqVIjMS4MEDIinbywrK5ur7s7jOExz_tFB7B3ccl=s900-c-k-c0x00ffffff-no-rj`}/>
+        <Title>Go to Mars</Title>
       </Header>
       {isLoading? (
           <Loader>Loading...</Loader>

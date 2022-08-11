@@ -1,17 +1,44 @@
-import { useEffect, useState } from "react";
-import { Link, Outlet, useMatch } from "react-router-dom";
-import { Route, Routes, useLocation, useParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query";
+import { Link, useMatch, useNavigate } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom"
 import styled from "styled-components";
+import { GetInfo, GetPriceInfo } from "../api";
 import { Chart } from "./Chart";
-import { Container, Header, Loader, Title } from "./Coins";
+import { Container, Img, Loader, Title } from "./Coins";
 import { Price } from "./Price";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { Helmet } from "react-helmet";
+
+export const Header = styled.header`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+`
+
+const HomeBtn = styled.div`
+  color: ${props=>props.theme.accentColor};
+  font-size: 30px;
+  top: 25px;
+  left: 25px;
+  cursor: pointer;
+  position: absolute;
+  svg{
+    transition: .5s ease-in;
+    &:hover{
+        scale: 1.2;
+    }
+  }
+`
 
 const Overview = styled.div`
   display: flex;
   justify-content: space-between;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${props=>props.theme.boxColor};
   padding: 10px 20px;
   border-radius: 10px;
+  box-shadow: 2px 4px 12px rgba(0,0,0,.01);
 `;
 
 const OverviewItem = styled.div`
@@ -40,9 +67,10 @@ const Tab = styled.span<{isActive:boolean}>`
   font-weight: 400;
   padding: 7px 0px;
   border-radius: 10px;
-  background-color:  rgba(0,0,0,0.5);
-  color: ${props=>props.isActive ? props.theme.accentColor : props.theme.textColor};
+  background-color:  ${props=>props.isActive ? props.theme.accentColor : props.theme.boxColor};
+  color: ${props=>(props.theme.accentColor == "#ff6b81" && props.isActive) ? "white" : props.theme.textColor};
   transition: color .5s ease-in;
+  box-shadow: 2px 4px 12px rgba(0,0,0,.01);
 `;
 
 const Description = styled.p`
@@ -64,7 +92,7 @@ interface ITag {
     ico_counter: number;
 }
 
-interface IInfoData {
+interface IInfo {
     id: string;
     name: string;
     symbol: string;
@@ -121,83 +149,84 @@ interface IPriceInfo {
 }
 
 export function Coin() {
-    const [loading, setLoading] = useState(true);
     const { coinId } = useParams() as unknown as ICoinID
     const { state } = useLocation() as ILocation
-    const [info, setInfo] = useState<IInfoData>()
-    const [priceInfo, setPriceInfo] = useState<IPriceInfo>()
-    //link의 state에서 넘긴 정보를 받을 수 있다.
+    const { isLoading: infoLoading, data: infoData } = useQuery<IInfo>(["infoInfo", coinId], ()=>GetInfo(coinId))
+    const { isLoading: priceLoading, data: priceData } = useQuery<IPriceInfo>(["priceInfo", coinId], ()=>GetPriceInfo(coinId),
+        // {refetchInterval: 5000}
+    )
+    // priceInfo 쿼리키 중복을 막기위해 기입
+    // argument를 fetch함수에 전달하기 위해서 ()=>GetPriceInfo(coinId) 익명함수안에 넣어주었다.
     const priceMatch = useMatch("/:coinId/price");
     const chartMatch = useMatch("/:coinId/chart");
-    useEffect(()=>{
-        (async()=>{
-          const infoData = await (await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)).json();
-          setLoading(false)
-        })()
-    },[coinId])
-    useEffect(()=>{
-        (async()=>{
-          const priceData = await (await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)).json();
-          setPriceInfo(priceData)
-        })()
-    },[coinId])
+    const navigate = useNavigate()
 
-    console.log(chartMatch)
+    const loading = infoLoading || priceLoading
+    console.log(priceData)
 
     return (
-        <Container>
-            <Header>
-                <Title>
-                    {state ? state : loading ? "Loading..." : info?.name}
-                </Title>
-            </Header>
-                {loading? (
-                    <Loader>Loading...</Loader>
-                    ) : (
-                        <>
-                            <Overview>
-                                <OverviewItem>
-                                    <span>Rank:</span>
-                                    <span>{info?.rank}</span>
-                                </OverviewItem>
-                                <OverviewItem>
-                                    <span>Symbol:</span>
-                                    <span>${info?.symbol}</span>
-                                </OverviewItem>
-                                <OverviewItem>
-                                    <span>Open Source:</span>
-                                    <span>{info?.open_source ? "Yes" : "No"}</span>
-                                </OverviewItem>
-                            </Overview>
-                            <Description>{info?.description}</Description>
-                            <Overview>
-                                <OverviewItem>
-                                    <span>Total Suply:</span>
-                                    <span>{priceInfo?.total_supply}</span>
-                                </OverviewItem>
-                                <OverviewItem>
-                                    <span>Max Supply:</span>
-                                    <span>{priceInfo?.max_supply}</span>
-                                </OverviewItem>
-                            </Overview>
-                            <Tabs>
-                                <Tab isActive={chartMatch !== null}>
-                                    <Link to={`/${coinId}/chart`}>Chart</Link>
-                                </Tab>
-                                <Tab isActive={priceMatch !== null}>
-                                    <Link to={`/${coinId}/price`}>Price</Link>
-                                </Tab>
-                            </Tabs>
-
-                            <Routes>
-                                <Route path={`chart`} element={<Chart />}></Route>
-                                <Route path={`price`} element={<Price />} />
-                            </Routes>
-
-                            <Outlet />
-                        </>
-                    )
-                }
-        </Container>
+        <>
+            <HomeBtn onClick={()=>navigate(`/`)}>
+                <FontAwesomeIcon
+                    icon={faArrowLeft}
+                />
+            </HomeBtn>
+            <Container>
+                <Helmet>
+                    <title>
+                    {state ? state : loading ? "Loading..." : infoData?.name}
+                    </title>
+                </Helmet>
+                <Header>
+                    <Title>
+                        <Img src={`https://coinicons-api.vercel.app/api/icon/${infoData?.symbol.toLowerCase()}`}></Img>
+                        {state ? state : loading ? "Loading..." : infoData?.name}
+                    </Title>
+                </Header>
+                    {loading? (
+                        <Loader>Loading...</Loader>
+                        ) : (
+                            <>
+                                <Overview>
+                                    <OverviewItem>
+                                        <span>Rank:</span>
+                                        <span>{infoData?.rank}</span>
+                                    </OverviewItem>
+                                    <OverviewItem>
+                                        <span>Symbol:</span>
+                                        <span>{infoData?.symbol}</span>
+                                    </OverviewItem>
+                                    <OverviewItem>
+                                        <span>Price:</span>
+                                        <span>$ {priceData?.quotes.USD.price.toFixed(3)}</span>
+                                    </OverviewItem>
+                                </Overview>
+                                <Description>{infoData?.description}</Description>
+                                <Overview>
+                                    <OverviewItem>
+                                        <span>Total Suply:</span>
+                                        <span>{priceData?.total_supply}</span>
+                                    </OverviewItem>
+                                    <OverviewItem>
+                                        <span>Max Supply:</span>
+                                        <span>{priceData?.max_supply}</span>
+                                    </OverviewItem>
+                                </Overview>
+                                <Tabs>
+                                    <Tab isActive={chartMatch !== null}>
+                                        <Link to={`/${coinId}/chart`}>Chart</Link>
+                                    </Tab>
+                                    <Tab isActive={priceMatch !== null}>
+                                        <Link to={`/${coinId}/price`}>Price</Link>
+                                    </Tab>
+                                </Tabs>
+                                
+                                {chartMatch? <Chart coinId={coinId}/>:null}
+                                {priceMatch? <Price />:null}
+                            </>
+                        )
+                    }
+            </Container>
+        </>
     )
 }
