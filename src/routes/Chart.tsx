@@ -27,18 +27,18 @@ export function Chart({coinId}:IChart) {
     const [isDark, setIsDark] = useRecoilState(darkState)
     //IOhlcvData[] IOhlcvData는 object자료이기 때문에 map을 사용하기위하여 배열로 변환시킨다.
     return(
-        <>
-            {isLoading ? <Loader>Loading...</Loader> :
+        <>  
+            { isLoading ? <Loader>Loading...</Loader> :
                         <ApexChart
                             type="candlestick"
                             series={[{ name: "Price",
                             data:(
                                 data?.map((price)=>(
-                                    {
+                                   {
                                         x: new Date(price.time_close*1000),
                                         y: [price.open, price.high, price.low, price.close]
                                     }
-                                ))
+                                )) 
                             )
                             }] as unknown as number[]}
                             options={{

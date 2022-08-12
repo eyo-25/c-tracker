@@ -17,7 +17,7 @@ export const Header = styled.header`
     padding: 20px 0;
 `
 
-const HomeBtn = styled.div`
+export const HomeBtn = styled.div`
   color: ${props=>props.theme.accentColor};
   font-size: 30px;
   top: 25px;
@@ -32,7 +32,7 @@ const HomeBtn = styled.div`
   }
 `
 
-const Overview = styled.div`
+export const Overview = styled.div`
   display: flex;
   justify-content: space-between;
   background-color: ${props=>props.theme.boxColor};
@@ -41,7 +41,7 @@ const Overview = styled.div`
   box-shadow: 2px 4px 12px rgba(0,0,0,.01);
 `;
 
-const OverviewItem = styled.div`
+export const OverviewItem = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -53,7 +53,7 @@ const OverviewItem = styled.div`
   }
 `;
 
-const Tabs = styled.div`
+export const Tabs = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   margin: 25px 0px;
@@ -114,7 +114,7 @@ interface IInfo {
     last_data_at: string;
 }
 
-interface IPriceInfo {
+export interface IPriceInfo {
     id: string;
     name: string;
     symbol: string;
@@ -222,7 +222,7 @@ export function Coin() {
                                 </Tabs>
                                 
                                 {chartMatch? <Chart coinId={coinId}/>:null}
-                                {priceMatch? <Price />:null}
+                                {priceMatch? <Price coinId={coinId}/>:null}
                             </>
                         )
                     }
